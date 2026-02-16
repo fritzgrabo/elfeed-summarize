@@ -1,0 +1,5 @@
+.agent-shell
+.claude
+.devcontainer
+.dir-locals.el
+*.elc

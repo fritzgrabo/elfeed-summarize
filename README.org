@@ -1,0 +1,89 @@
+* elfeed-summarize
+
+Add LLM-powered inline summaries to [[https://github.com/skeeto/elfeed][elfeed]].
+
+Keeping up with a busy RSS feed means a lot of scanning headlines.
+Sometimes a headline doesn't tell you enough to decide whether an
+article is worth reading. This package lets you generate a brief
+summary for any entry — right inside elfeed, without leaving the
+buffer — using the LLM provider of your choice via the [[https://github.com/ahyatt/llm][llm]] package.
+
+Summaries appear inline in both the search buffer (as overlays below
+the headline) and the show buffer (as a =Summary:= header). You can
+expand a summary incrementally by requesting additional paragraphs.
+Summaries are cached in elfeed's entry metadata, so they persist
+across sessions.
+
+[[screenshots/elfeed-search-mode.jpeg]]
+
+[[screenshots/elfeed-show-mode.jpeg]]
+
+* Getting Started
+
+You'll need an LLM provider supported by the [[https://github.com/ahyatt/llm][llm]] package (Ollama,
+OpenAI, Gemini, Claude, etc.).
+
+Set =elfeed-summarize-llm-provider= to an =llm= provider instance and
+enable the global minor mode:
+
+#+begin_src emacs-lisp
+(use-package elfeed-summarize
+  :ensure
+  :after elfeed
+  :config
+  (setq elfeed-summarize-llm-provider
+        (make-llm-ollama :chat-model "mistral:latest"))
+  (elfeed-summarize-mode 1))
+#+end_src
+
+* Usage
+
+** Key Bindings
+
+Both the search and show buffers share the same bindings:
+
+| Key | Command                                                        |
+|-----+----------------------------------------------------------------|
+| =z=   | Toggle summary (generate if needed, then show/hide)            |
+| =Z=   | Expand summary (generate if needed, then add detail)           |
+
+Press =z= on any entry to generate a summary (or toggle its visibility
+if one already exists). In the search buffer, the summary appears as
+an overlay below the headline. In the show buffer, it appears as a
+=Summary:= header line.
+
+Press =Z= to expand a summary with an additional paragraph. If no
+summary exists yet, =Z= generates one first. Repeated presses of =Z= add
+more detail incrementally.
+
+Use =C-h b= in any elfeed buffer to see all active key bindings.
+
+** Removing Summaries
+
+Summaries are cached in elfeed's entry metadata so they survive across
+sessions (as long as the elfeed database is saved).
+
+Use =M-x elfeed-summarize-remove-summary= to remove the cached summary
+for the entry at point, and =M-x elfeed-summarize-remove-all-summaries=
+to clear every cached summary from the elfeed database.
+
+* Customization
+
+| Variable                            | Description                                                        | Default                         |
+|-------------------------------------+--------------------------------------------------------------------+---------------------------------|
+| =elfeed-summarize-llm-provider=      | LLM provider instance (required)                                   | =nil=                             |
+| =elfeed-summarize-system-prompt=     | System prompt for initial summary generation                       | (one-sentence prompt)           |
+| =elfeed-summarize-expand-prompt=     | System prompt for summary expansion                                | (one-paragraph prompt)          |
+| =elfeed-summarize-max-entry-length=  | Max characters of entry text sent to the LLM; =nil= to disable limit | =1500=                            |
+| =elfeed-summarize-summary-face=      | Face for inline summary text                                       | inherits =font-lock-comment-face= |
+| =elfeed-summarize-show-insert-summary-function= | Function that inserts the summary into show buffers | =elfeed-summarize-show-insert-summary-mail-style= |
+
+* Acknowledgments
+
+This package builds on the work of others:
+
+- [[https://github.com/skeeto/elfeed][elfeed]] by Christopher Wellons — the excellent Emacs feed reader that
+  this package extends.
+- [[https://github.com/ahyatt/llm][llm]] by Andrew Hyatt — the Emacs LLM interface that makes it possible
+  to support multiple providers with a single API.
+
